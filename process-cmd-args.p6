@@ -57,6 +57,12 @@ is( process-cmd-args(<a b c d e>, {})
 	, (<a b c d e> , {})
 	, '<a b c d e>');
 
+# after a -- the rest is considered positional arguments
+
+is( process-cmd-args(<a -- --bcde f g>, {}),
+        (<a --bcde f g>, {}),
+        'after -- nothing is considered a switch');
+
 done_testing();
 =begin pod
 	Things to support eventually:
