@@ -92,3 +92,35 @@ done_testing();
     :name=val1,'val 2',etc     :name«val1 'val 2' etc»
 
 =end pod
+
+
+# infrastructure code for loading sub MAIN
+# (not part of the challenge :-)
+
+sub MAIN($first, *@rest, Bool :$verbose, :$outfile) {
+    say "first: $first.perl()";
+    say "rest:  @rest.perl()";
+    say "named: verbose: $verbose.perl()";
+    say "named: outfile: $outfile.perl()";
+}
+
+sub run-it {
+    my $main = &MAIN;
+    my @named-bool = $main.signature.params.grep: {.named && .type ~~ Bool};
+    # the name still has a sigil, ie it's '$verbose', not 'verbose'
+    my %named-bool = @named-bool».name».substr(1) Z=> (1 xx +@named-bool);
+    say %named-bool.perl;
+
+    {
+        my @*ARGS = <--verbose a b --outfile foo c d e>;
+        my @positional = process-cmd-args(@*ARGS, %named-bool);
+        my %named = @positional.pop;
+        MAIN(|@positional, |%named);
+    }
+
+}
+
+# uncomment to actually run it
+# run-it();
+
+# vim: ft=perl6
