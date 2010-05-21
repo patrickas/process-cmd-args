@@ -1,7 +1,7 @@
 use v6;
 use Test;
 
-sub process-cmd-args(@args, %boolean-names) {
+sub process-cmd-args(@args, %named) {
 	my (@positional-arguments, %named-arguments);
 	my $looking_for;
 	for @args -> $passed_value {
@@ -12,7 +12,7 @@ sub process-cmd-args(@args, %boolean-names) {
 		} elsif substr($passed_value,0,2) eq '--' {
 
 			my $arg = $passed_value.substr(2);
-			if %boolean-names{$arg} {
+			if %named{$arg} ~~ Bool {
 				%named-arguments{$arg}=True;
 			} elsif $passed_value.match( /\=/ ) {
 				my @parts = $arg.split('=', 2);
@@ -96,6 +96,9 @@ is( process-cmd-args(["--name=val1,'val 2',etc"], {})
 	, ((), {name=>("val1", "val 2", "etc")})
 	, "--name=val1,'val 2',etc    :name«val1 'val 2' etc»");
 
+is( process-cmd-args(['--name=val1'], {myoption=>Array})
+	, (() , {name=>['val1']})
+	, '--name=val1 having name=>Array');
 
 is( process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>Array})
 	, ((), {name=>("val1", "val 2", "etc")})
