@@ -63,6 +63,53 @@ is( process-cmd-args(<a -- --bcde f g>, {}),
         (<a --bcde f g>, {}),
         'after -- nothing is considered a switch');
 
+is( process-cmd-args(['--name'], {name=>'Bool'})
+	, ((), {name=>Bool::True})
+	, '--name                     :name            # only if declared Bool');
+
+is( process-cmd-args(['--name=value'], {name=>'Bool'})
+	, ((), {name=>'value'})
+	, "--name=value               :name<value>     # don't care (Bool)");
+
+is( process-cmd-args(['--name=value'], {})
+	, ((), {name=>'value'})
+	, "--name=value               :name<value>     # don't care (not Bool)");
+
+is( process-cmd-args(['--name', 'value'], {})
+	, ((), {name=>'value'})
+	, "--name value               :name<value>     # only if not declared Bool (not declared Bool)");
+
+ok( process-cmd-args(['--name', 'value'], {name=>'Bool'}) !~~ process-cmd-args(['--name', 'value'], {})
+	, "--name value               :name<value>     # only if not declared Bool (declared Bool different result)");
+
+is( process-cmd-args(['--name="spacey value"'], {})
+	, ((), {name=>'spacey value'})
+	, qq{--name="spacey value"      :name«'spacey value'»});
+
+is( process-cmd-args(["--name='spacey value'"], {})
+	, process-cmd-args(['--name="spacey value"'], {})
+	, qq{--name='spacey value'      :name«'spacey value'»});
+
+is( process-cmd-args(["--name=val1,'val 2',etc"], {})
+	, ((), {name=>("val1", "val 2", "etc")})
+	, "--name=val1,'val 2',etc    :name«val1 'val 2' etc»");
+
+
+is( process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>'Array'})
+	, ((), {name=>("val1", "val 2", "etc")})
+	, "--name val1 'val 2' etc    :name«val1 'val 2' etc» # only if declared @ (Declared Array)");
+
+ok( process-cmd-args(["--name=val1", "'val 2'", "etc"], {})
+	!~~ process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>'Array'})
+	, "--name val1 'val 2' etc    :name«val1 'val 2' etc» # only if declared @ (not declated Array)");
+
+is( process-cmd-args(["--name=val1", "val2", "etc"], {})
+	, (('val2','etc'), {name=>"val1"})
+	, "--name val1 'val 2' etc    ????  # when not declated Array)");
+
+
+
+
 done_testing();
 =begin pod
 	Things to support eventually:
@@ -78,9 +125,9 @@ done_testing();
     --name=value               :name<value>     # don't care
     --name value               :name<value>     # only if not declared Bool
      --name="spacey value"      :name«'spacey value'»
-    --name "spacey value"      :name«'spacey value'»
+    --name "spacey value"      :name«'spacey value'» (SKIP: Needs more clarification)
     --name='spacey value'      :name«'spacey value'»
-    --name 'spacey value'      :name«'spacey value'»
+    --name 'spacey value'      :name«'spacey value'» (SKIP: Needs more clarification)
     --name=val1,'val 2',etc    :name«val1 'val 2' etc»
     --name val1 'val 2' etc    :name«val1 'val 2' etc» # only if declared @
     --                                          # end named argument processing
