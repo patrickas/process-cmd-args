@@ -63,6 +63,7 @@ is( process-cmd-args(<a -- --bcde f g>, {}),
         (<a --bcde f g>, {}),
         'after -- nothing is considered a switch');
 
+#Spec examples:
 is( process-cmd-args(['--name'], {name=>Bool})
 	, ((), {name=>Bool::True})
 	, '--name                     :name            # only if declared Bool');
@@ -82,6 +83,7 @@ is( process-cmd-args(['--name', 'value'], {})
 ok( process-cmd-args(['--name', 'value'], {name=>Bool}) !~~ process-cmd-args(['--name', 'value'], {})
 	, "--name value               :name<value>     # only if not declared Bool (declared Bool different result)");
 
+#Spacey values
 is( process-cmd-args(['--name="spacey value"'], {})
 	, ((), {name=>'spacey value'})
 	, qq{--name="spacey value"      :name«'spacey value'»});
@@ -105,8 +107,16 @@ ok( process-cmd-args(["--name=val1", "'val 2'", "etc"], {})
 
 is( process-cmd-args(["--name=val1", "val2", "etc"], {})
 	, (('val2','etc'), {name=>"val1"})
-	, "--name val1 'val 2' etc    ????  # when not declated Array)");
+	, "--name val1 'val 2' etc    :name<val1>  # when not declared Array)");
 
+#Negation
+is( process-cmd-args(['--/name'], {name=>Bool})
+	, ((), {name=>Bool::False})
+	, '--/name                    :!name');
+
+is( process-cmd-args(['--/name'], {})
+	, ((), {name=>Bool::False})
+	, '--/name                    :!name');
 
 
 
