@@ -49,7 +49,7 @@ is( process-cmd-args(<--myoption foo>, {})
 	, (() , {myoption=>'foo'})
 	, '--myoption foo');
 
-is( process-cmd-args(<--myoption foo>, {myoption=>'Bool'})
+is( process-cmd-args(<--myoption foo>, {myoption=>Bool})
 	, (<foo> , {myoption=>True})
 	, '--myoption foo having myoption=>Bool');
 
@@ -63,11 +63,11 @@ is( process-cmd-args(<a -- --bcde f g>, {}),
         (<a --bcde f g>, {}),
         'after -- nothing is considered a switch');
 
-is( process-cmd-args(['--name'], {name=>'Bool'})
+is( process-cmd-args(['--name'], {name=>Bool})
 	, ((), {name=>Bool::True})
 	, '--name                     :name            # only if declared Bool');
 
-is( process-cmd-args(['--name=value'], {name=>'Bool'})
+is( process-cmd-args(['--name=value'], {name=>Bool})
 	, ((), {name=>'value'})
 	, "--name=value               :name<value>     # don't care (Bool)");
 
@@ -79,7 +79,7 @@ is( process-cmd-args(['--name', 'value'], {})
 	, ((), {name=>'value'})
 	, "--name value               :name<value>     # only if not declared Bool (not declared Bool)");
 
-ok( process-cmd-args(['--name', 'value'], {name=>'Bool'}) !~~ process-cmd-args(['--name', 'value'], {})
+ok( process-cmd-args(['--name', 'value'], {name=>Bool}) !~~ process-cmd-args(['--name', 'value'], {})
 	, "--name value               :name<value>     # only if not declared Bool (declared Bool different result)");
 
 is( process-cmd-args(['--name="spacey value"'], {})
@@ -95,12 +95,12 @@ is( process-cmd-args(["--name=val1,'val 2',etc"], {})
 	, "--name=val1,'val 2',etc    :name«val1 'val 2' etc»");
 
 
-is( process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>'Array'})
+is( process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>Array})
 	, ((), {name=>("val1", "val 2", "etc")})
 	, "--name val1 'val 2' etc    :name«val1 'val 2' etc» # only if declared @ (Declared Array)");
 
 ok( process-cmd-args(["--name=val1", "'val 2'", "etc"], {})
-	!~~ process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>'Array'})
+	!~~ process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>Array})
 	, "--name val1 'val 2' etc    :name«val1 'val 2' etc» # only if declared @ (not declated Array)");
 
 is( process-cmd-args(["--name=val1", "val2", "etc"], {})
