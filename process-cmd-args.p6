@@ -169,13 +169,13 @@ sub MAIN($first, *@rest, Bool :$verbose, :$outfile) {
 }
 
 sub run-it($main) {
-    my @named-bool = $main.signature.params.grep: {.named && .type ~~ Bool};
+    my @named-params = $main.signature.params.grep: {.named && .type ~~ Bool};
     # the name still has a sigil, ie it's '$verbose', not 'verbose'
-    my %named-bool = @named-bool».name».substr(1) Z=> (1 xx +@named-bool);
+    my %named-params = @named-params».name».substr(1) Z=> @named-params».type;
 
     {
         my @*ARGS = <--verbose a b --outfile foo c d e>;
-        my @positional = process-cmd-args(@*ARGS, %named-bool);
+        my @positional = process-cmd-args(@*ARGS, %named-params);
         my %named = @positional.pop;
         $main(|@positional, |%named);
     }
