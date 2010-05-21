@@ -115,7 +115,6 @@ sub run-it($main) {
     my @named-bool = $main.signature.params.grep: {.named && .type ~~ Bool};
     # the name still has a sigil, ie it's '$verbose', not 'verbose'
     my %named-bool = @named-bool».name».substr(1) Z=> (1 xx +@named-bool);
-    say %named-bool.perl;
 
     {
         my @*ARGS = <--verbose a b --outfile foo c d e>;
