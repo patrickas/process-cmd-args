@@ -10,23 +10,24 @@ sub process-cmd-args(@args, %boolean-names) {
 			$looking_for='';
 
 		} elsif substr($passed_value,0,2) eq '--' {
+
 			my $arg = $passed_value.substr(2);
 			if %boolean-names{$arg} {
 				%named-arguments{$arg}=True;
-			} elsif $passed_value.match( /\=/ ) { #This should probably  be /=/
-				my @parts = split('=',$arg , 2);
-				%named-arguments{@parts[0]}=@parts[1];
+			} elsif $passed_value.match( /\=/ ) {
+				my @parts = $arg.split('=', 2);
+				%named-arguments{@parts[0]} = @parts[1];
 			} else {
 				$looking_for=$arg;
 			}
 
 		} else {
-			push @positional-arguments , $passed_value;
+			@positional-arguments.push: $passed_value;
 		}
-
 	}
+
 	if $looking_for {
-		%named-arguments{$looking_for}='';
+		%named-arguments{$looking_for} = '';
 	}
     return @positional-arguments, %named-arguments;
 }
@@ -34,7 +35,7 @@ sub process-cmd-args(@args, %boolean-names) {
 
 plan *;
 
-#Examples form the weekly contribution
+#Examples from the weekly contribution
 
 is( process-cmd-args(<--verbose=2 /etc/password pw1 pw2 pw3>, {})
 	, (</etc/password pw1 pw2 pw3> , {verbose=>2})
@@ -104,8 +105,7 @@ sub MAIN($first, *@rest, Bool :$verbose, :$outfile) {
     say "named: outfile: $outfile.perl()";
 }
 
-sub run-it {
-    my $main = &MAIN;
+sub run-it($main) {
     my @named-bool = $main.signature.params.grep: {.named && .type ~~ Bool};
     # the name still has a sigil, ie it's '$verbose', not 'verbose'
     my %named-bool = @named-bool».name».substr(1) Z=> (1 xx +@named-bool);
@@ -115,12 +115,12 @@ sub run-it {
         my @*ARGS = <--verbose a b --outfile foo c d e>;
         my @positional = process-cmd-args(@*ARGS, %named-bool);
         my %named = @positional.pop;
-        MAIN(|@positional, |%named);
+        $main(|@positional, |%named);
     }
 
 }
 
 # uncomment to actually run it
-# run-it();
+# run-it(&MAIN);
 
 # vim: ft=perl6
