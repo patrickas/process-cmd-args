@@ -3,7 +3,7 @@ use Test;
 
 sub process-cmd-args(@args, %named) {
 	my (@positional-arguments, %named-arguments);
-	my ($looking_for , $no_more_switches);
+	my ($looking_for , $no_more_switches , $negate);
 	for @args -> $passed_value {
 		if $no_more_switches {
 			@positional-arguments.push: $passed_value;
@@ -13,6 +13,11 @@ sub process-cmd-args(@args, %named) {
 
 		} elsif substr($passed_value,0,2) eq '--' {
 			my $arg = $passed_value.substr(2);
+			if $arg.match(/^\//) { 
+				$arg .= substr(1) ;
+				$negate = $arg;
+			}
+			
 			if $arg eq '' {
 				$no_more_switches=True;
 			} elsif %named{$arg} ~~ Bool {
@@ -31,13 +36,18 @@ sub process-cmd-args(@args, %named) {
 				} else {
 					%named-arguments{$name} = $value;
 				}
-			} else {
+			} elsif !$negate {
 				$looking_for=$arg;
 			}
 
 		} else {
 			@positional-arguments.push: $passed_value;
 		}
+	}
+
+	if $negate {
+		%named-arguments{$negate} = False;
+		$negate = '';
 	}
 
 	if $looking_for {
