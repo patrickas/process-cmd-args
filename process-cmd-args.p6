@@ -12,12 +12,18 @@ sub process-cmd-args(@args, %named) {
 			$looking_for='';
 
 		} elsif substr($passed_value,0,2) eq '--' {
-
 			my $arg = $passed_value.substr(2);
 			if $arg eq '' {
 				$no_more_switches=True;
 			} elsif %named{$arg} ~~ Bool {
 				%named-arguments{$arg}=True;
+			} elsif %named{$arg} ~~ Array || ($passed_value.match( /\=/ ) &&  %named{$arg.split('=', 2)[0]} ~~ Array ) { 
+				if $passed_value.match( /\=/ ) {
+					my ($name , $value) = $arg.split('=', 2);
+					%named-arguments{$name} = [$value.split(',')];
+				} else {
+					#Not yes implemented
+				}
 			} elsif $passed_value.match( /\=/ ) {
 				my ($name , $value) = $arg.split('=', 2);
 				if ($value.match(/^\'.*\'$/) || $value.match(/^\".*\"$/) ) {
@@ -100,13 +106,22 @@ is( process-cmd-args(["--name='spacey value'"], {})
 	, process-cmd-args(['--name="spacey value"'], {})
 	, qq{--name='spacey value'      :name«'spacey value'»});
 
-is( process-cmd-args(["--name=val1,'val 2',etc"], {})
-	, ((), {name=>("val1", "val 2", "etc")})
-	, "--name=val1,'val 2',etc    :name«val1 'val 2' etc»");
-
+#Array options
 is( process-cmd-args(['--name=val1'], {myoption=>Array})
 	, (() , {name=>['val1']})
 	, '--name=val1 having name=>Array');
+
+is( process-cmd-args(['--name=val1,val2'], {name=>Array})
+	, (() , {name=>['val1','val2']})
+	, '--name=val1,val2 having name=>Array');
+
+is( process-cmd-args(['--name=val1,val2'], {})
+	, (() , {name=>['val1','val2']})
+	, '--name=val1,val2 having name not specified as array');
+
+is( process-cmd-args(["--name=val1,'val 2',etc"], {})
+	, ((), {name=>("val1", "val 2", "etc")})
+	, "--name=val1,'val 2',etc    :name«val1 'val 2' etc»");
 
 is( process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>Array})
 	, ((), {name=>("val1", "val 2", "etc")})
@@ -114,7 +129,7 @@ is( process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>Array})
 
 ok( process-cmd-args(["--name=val1", "'val 2'", "etc"], {})
 	!~~ process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>Array})
-	, "--name val1 'val 2' etc    :name«val1 'val 2' etc» # only if declared @ (not declated Array)");
+	, "--name val1 'val 2' etc    :name«val1 'val 2' etc» # only if declared @ (not declared Array)");
 
 is( process-cmd-args(["--name=val1", "val2", "etc"], {})
 	, (('val2','etc'), {name=>"val1"})
