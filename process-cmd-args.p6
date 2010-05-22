@@ -3,16 +3,20 @@ use Test;
 
 sub process-cmd-args(@args, %named) {
 	my (@positional-arguments, %named-arguments);
-	my $looking_for;
+	my ($looking_for , $no_more_switches);
 	for @args -> $passed_value {
-		if $looking_for {
+		if $no_more_switches {
+			@positional-arguments.push: $passed_value;
+		} elsif $looking_for {
 			%named-arguments{$looking_for}=$passed_value;
 			$looking_for='';
 
 		} elsif substr($passed_value,0,2) eq '--' {
 
 			my $arg = $passed_value.substr(2);
-			if %named{$arg} ~~ Bool {
+			if $arg eq '' {
+				$no_more_switches=True;
+			} elsif %named{$arg} ~~ Bool {
 				%named-arguments{$arg}=True;
 			} elsif $passed_value.match( /\=/ ) {
 				my @parts = $arg.split('=', 2);
