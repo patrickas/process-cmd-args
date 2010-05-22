@@ -19,8 +19,12 @@ sub process-cmd-args(@args, %named) {
 			} elsif %named{$arg} ~~ Bool {
 				%named-arguments{$arg}=True;
 			} elsif $passed_value.match( /\=/ ) {
-				my @parts = $arg.split('=', 2);
-				%named-arguments{@parts[0]} = @parts[1];
+				my ($name , $value) = $arg.split('=', 2);
+				if ($value.match(/^\'.*\'$/) || $value.match(/^\".*\"$/) ) {
+					%named-arguments{$name} = $value.substr(1,-1);
+				} else {
+					%named-arguments{$name} = $value;
+				}
 			} else {
 				$looking_for=$arg;
 			}
