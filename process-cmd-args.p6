@@ -1,6 +1,17 @@
 use v6;
 use Test;
 
+sub same-but-false ($what) {
+	if $what ~~ Bool { return False };
+	my $c = class {
+		has $.orig;
+		method Bool {return False};
+		method Str {return $.orig};
+		method Array {return $.orig};
+	};
+	return $c.new(orig=>$what);
+}
+
 sub process-cmd-args(@args, %named) {
 	my (@positional-arguments, %named-arguments);
 	my ($looking_for , $no_more_switches , $negate);
@@ -25,18 +36,23 @@ sub process-cmd-args(@args, %named) {
 			} elsif %named{$arg} ~~ Array || ($passed_value.match( /\=/ ) &&  %named{$arg.split('=', 2)[0]} ~~ Array ) { 
 				if $passed_value.match( /\=/ ) {
 					my ($name , $value) = $arg.split('=', 2);
+					if $negate {$negate=$name;} 
 					%named-arguments{$name} = [$value.split(',')];
 				} else {
 					#Not yes implemented
 				}
 			} elsif $passed_value.match( /\=/ ) {
 				my ($name , $value) = $arg.split('=', 2);
+				if $negate {$negate=$name;} 
 				if ($value.match(/^\'.*\'$/) || $value.match(/^\".*\"$/) ) {
 					%named-arguments{$name} = $value.substr(1,-1);
 				} else {
 					%named-arguments{$name} = $value;
 				}
-			} elsif !$negate {
+			} elsif $negate {
+				%named-arguments{$arg} = False; 
+				$negate='';
+			} else {
 				$looking_for=$arg;
 			}
 
@@ -46,7 +62,7 @@ sub process-cmd-args(@args, %named) {
 	}
 
 	if $negate {
-		%named-arguments{$negate} = False;
+		%named-arguments{$negate} = same-but-false( %named-arguments{$negate} );
 		$negate = '';
 	}
 
@@ -153,6 +169,26 @@ is( process-cmd-args(['--/name'], {name=>Bool})
 is( process-cmd-args(['--/name'], {})
 	, ((), {name=>Bool::False})
 	, '--/name                    :!name');
+
+my (@positional , %named);
+
+@positional = process-cmd-args(['--/name=value'], {});
+%named = @positional.pop;
+is( @positional     , ()       , '--/name=value              :name<value> but False (no positional)');
+is( ~%named<name>  , 'value' , '--/name=value              :name<value> but False (Got value)');
+is( !!%named<name> , False     , '--/name=value              :name<value> but False (Got False) ');
+
+@positional = process-cmd-args(['--/name="spacey value"'], {});
+%named = @positional.pop;
+is( @positional     , ()       , '--/name="spacey value"     :name«\'spacey value\'» but False (no positional)');
+is( ~%named<name>  , 'spacey value' , '--/name="spacey value"     :name«\'spacey value\'» but False (Got spacey value)');
+is( !!%named<name> , False     , '--/name="spacey value"     :name«\'spacey value\'» but False (Got False) ');
+
+@positional = process-cmd-args(["--/name='spacey value'"], {});
+%named = @positional.pop;
+is( @positional     , ()       , '--/name=\'spacey value\'     :name«\'spacey value\'» but False (no positional)');
+is( ~%named<name>  , 'spacey value' , '--/name=\'spacey value\'     :name«\'spacey value\'» but False (Got spacey value)');
+is( !!%named<name> , False     , '--/name=\'spacey value\'     :name«\'spacey value\'» but False (Got False) ');
 
 
 
