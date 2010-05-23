@@ -19,9 +19,8 @@ sub process-cmd-args(@args, %named) {
 		if $no_more_switches {
 			@positional-arguments.push: $passed_value;
 		} elsif $looking_for {
-			%named-arguments{$looking_for}=$passed_value;
+			%named-arguments{$looking_for}=( %named{$looking_for} ~~ Array ?? [$passed_value.split(',')] !! $passed_value);
 			$looking_for='';
-
 		} elsif substr($passed_value,0,2) eq '--' {
 			my $arg = $passed_value.substr(2);
 			if $arg.match(/^\//) { 
@@ -39,7 +38,7 @@ sub process-cmd-args(@args, %named) {
 					if $negate {$negate=$name;} 
 					%named-arguments{$name} = [$value.split(',')];
 				} else {
-					#Not yes implemented
+					$looking_for=$arg;
 				}
 			} elsif $passed_value.match( /\=/ ) {
 				my ($name , $value) = $arg.split('=', 2);
@@ -151,13 +150,21 @@ is( process-cmd-args(['--name=val1,val2'], {})
 	, (() , {name=>['val1','val2']})
 	, '--name=val1,val2 having name not specified as array');
 
+is( process-cmd-args(['--name', 'val1,val2'], {name=>Array})
+	, (() , {name=>['val1','val2']})
+	, '--name val1,val2 having name specified as array');
+
+skip {
 is( process-cmd-args(["--name=val1,'val 2',etc"], {})
 	, ((), {name=>("val1", "val 2", "etc")})
 	, "--name=val1,'val 2',etc    :name«val1 'val 2' etc»");
+}
 
+skip {
 is( process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>Array})
 	, ((), {name=>("val1", "val 2", "etc")})
 	, "--name val1 'val 2' etc    :name«val1 'val 2' etc» # only if declared @ (Declared Array)");
+}
 
 ok( process-cmd-args(["--name=val1", "'val 2'", "etc"], {})
 	!~~ process-cmd-args(["--name=val1", "'val 2'", "etc"], {name=>Array})
