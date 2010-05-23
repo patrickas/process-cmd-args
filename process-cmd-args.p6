@@ -46,6 +46,8 @@ sub process-cmd-args(@args, %named) {
 				if $negate {$negate=$name;} 
 				if ($value.match(/^\'.*\'$/) || $value.match(/^\".*\"$/) ) {
 					%named-arguments{$name} = $value.substr(1,-1);
+				} elsif $value.match( /.\,./ ) { #--separator=, should not be an array by default but --values=1,2,3 should be
+					%named-arguments{$name} = [$value.split(',')];
 				} else {
 					%named-arguments{$name} = $value;
 				}
@@ -140,6 +142,10 @@ is( process-cmd-args(['--name=val1'], {myoption=>Array})
 is( process-cmd-args(['--name=val1,val2'], {name=>Array})
 	, (() , {name=>['val1','val2']})
 	, '--name=val1,val2 having name=>Array');
+
+is( process-cmd-args(['--separator=,'], {})
+	, (() , {separator=>','})
+	, '--separator=, having separator not specified as array');
 
 is( process-cmd-args(['--name=val1,val2'], {})
 	, (() , {name=>['val1','val2']})
