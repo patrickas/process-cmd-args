@@ -13,15 +13,10 @@ sub same-but-false ($what) {
 }
 
 sub process-cmd-args(@args, %named) {
-	my (@positional-arguments, %named-arguments);
-	my ($looking_for , $no_more_switches , $negate);
-	for @args -> $passed_value {
-		if $no_more_switches {
-			@positional-arguments.push: $passed_value;
-		} elsif $looking_for {
-			%named-arguments{$looking_for}=( %named{$looking_for} ~~ Array ?? [$passed_value.split(',')] !! $passed_value);
-			$looking_for='';
-		} elsif substr($passed_value,0,2) eq '--' {
+	my (@positional-arguments, %named-arguments , $negate);
+	while ( @args )  {
+		my $passed_value = @args.shift;
+		if substr($passed_value,0,2) eq '--' {
 			my $arg = $passed_value.substr(2);
 			if $arg.match(/^\//) { 
 				$arg .= substr(1) ;
@@ -29,7 +24,8 @@ sub process-cmd-args(@args, %named) {
 			}
 			
 			if $arg eq '' {
-				$no_more_switches=True;
+				@positional-arguments.push: @args;
+				last;
 			} elsif %named{$arg} ~~ Bool {
 				%named-arguments{$arg}=True;
 			} elsif %named{$arg} ~~ Array || ($passed_value.match( /\=/ ) &&  %named{$arg.split('=', 2)[0]} ~~ Array ) { 
@@ -38,7 +34,7 @@ sub process-cmd-args(@args, %named) {
 					if $negate {$negate=$name;} 
 					%named-arguments{$name} = [$value.split(',')];
 				} else {
-					$looking_for=$arg;
+					%named-arguments{$arg} = [@args.shift.split(',')];
 				}
 			} elsif $passed_value.match( /\=/ ) {
 				my ($name , $value) = $arg.split('=', 2);
@@ -54,9 +50,8 @@ sub process-cmd-args(@args, %named) {
 				%named-arguments{$arg} = False; 
 				$negate='';
 			} else {
-				$looking_for=$arg;
+				%named-arguments{$arg}=@args.shift;
 			}
-
 		} else {
 			@positional-arguments.push: $passed_value;
 		}
@@ -67,9 +62,6 @@ sub process-cmd-args(@args, %named) {
 		$negate = '';
 	}
 
-	if $looking_for {
-		%named-arguments{$looking_for} = '';
-	}
     return @positional-arguments, %named-arguments;
 }
 
