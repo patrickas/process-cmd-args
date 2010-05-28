@@ -3,16 +3,11 @@ use Test;
 plan *;
 
 sub USAGE ($sub=&MAIN) {
-	my @help-msgs;
-	if ($sub ~~ Multi ) {
-		for $sub.candidates -> $single {
-			@help-msgs.push( USAGE-one-sub ($single) );
-		}
-	} else {
-		@help-msgs.push( USAGE-one-sub ($sub) );
-	}
+	my @subs = $sub ~~ Multi  ?? $sub.candidates !! ($sub);
+	my @help-msgs = map { USAGE-one-sub ($_) }, @subs;
 	return  "Usage\n" ~ @help-msgs.join("\nor\n");
 }
+
 sub USAGE-one-sub ($sub=&MAIN) {
 	my $sig = $sub.signature;
 	my @arguments;
