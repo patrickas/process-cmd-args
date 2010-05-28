@@ -3,6 +3,17 @@ use Test;
 plan *;
 
 sub USAGE ($sub=&MAIN) {
+	my @help-msgs;
+	if ($sub ~~ Multi ) {
+		for $sub.candidates -> $single {
+			@help-msgs.push( USAGE-one-sub ($single) );
+		}
+	} else {
+		@help-msgs.push( USAGE-one-sub ($sub) );
+	}
+	return  "Usage\n" ~ @help-msgs.join("\nor\n");
+}
+sub USAGE-one-sub ($sub=&MAIN) {
 	my $sig = $sub.signature;
 	my @arguments;
 	for $sig.params -> $param {
@@ -22,7 +33,7 @@ sub USAGE ($sub=&MAIN) {
 		@arguments.push($argument);
 	}
 
-	return  "Usage\n" ~ $*PROGRAM_NAME ~ ' ' ~ @arguments.join(' ');
+	return  $*PROGRAM_NAME ~ ' '  ~ @arguments.join(' ');
 
 }
 
@@ -52,5 +63,10 @@ is( USAGE($main) , "$common files [more [...]]" , 'Slurpy shows "more"');
 
 $main = sub ($first, *@rest, Bool :$verbose, :$outfile) {...}
 is( USAGE($main) , "$common first rest [more [...]] [--verbose] [--outfile=value-of-outfile]" , 'Mix of params');
+
+multi sub MULTIMAIN($first,$second) {...}
+multi sub MULTIMAIN($first, Bool :$verbose, :$outfile) {...}
+is( USAGE(&MULTIMAIN) , "$common first second\nor\n$*PROGRAM_NAME first [--verbose] [--outfile=value-of-outfile]" , 'Multi sub test');
+
 
 done_testing();
