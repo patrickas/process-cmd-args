@@ -14,14 +14,17 @@ sub USAGE ($sub=&MAIN) {
 					;
 		} else {
 			$argument = $param.name.substr(1);
+			if ($param.slurpy) {
+				$argument ~= " [more [...]]";
+			}
 		}
 		$argument = "[$argument]" if $param.optional;
 		@arguments.push($argument);
 	}
+
 	return  "Usage\n" ~ $*PROGRAM_NAME ~ ' ' ~ @arguments.join(' ');
 
 }
-
 
 my $common = "Usage\n$*PROGRAM_NAME";
 
@@ -44,7 +47,10 @@ is( USAGE($main) , "$common [--named]" , 'Bool optional');
 $main = sub (Bool :$named!) {...}
 is( USAGE($main) , "$common --named" , 'Bool mandatory');
 
+$main = sub (*@files) {...}
+is( USAGE($main) , "$common files [more [...]]" , 'Slurpy shows "more"');
+
 $main = sub ($first, *@rest, Bool :$verbose, :$outfile) {...}
-is( USAGE($main) , "$common first rest [--verbose] [--outfile=value-of-outfile]" , 'Mix of params');
+is( USAGE($main) , "$common first rest [more [...]] [--verbose] [--outfile=value-of-outfile]" , 'Mix of params');
 
 done_testing();
